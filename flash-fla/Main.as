@@ -153,6 +153,19 @@
 			
 		}
 		
+		public function jAddParameter(key,val):void
+		{
+			
+			urlParams[key] = val;
+			
+		}
+		
+		public function jRemoveParameter(key):void
+	   {
+
+			delete urlParams[key];
+
+	   }
 		
 		public function jStopPreview():void
 		{
@@ -225,23 +238,34 @@
 			}
 			
 			
-			ExternalInterface.call("$.jRecorder.callback_finished_recording");
+			ExternalInterface.call("jQuery.jRecorder.callback_finished_recording");
 			
 			if(_var1 != '')
-			{
+			{   var key:String;
+				var valuePairs:Array = new Array();
+				for (key in this.urlParams)
+				{
+					
+					if (urlParams.hasOwnProperty(key))
+					{
+						valuePairs.push(escape(key) + "=" + escape(urlParams[key]));
+					}
+				}
+
+				_var1 += (_var1.indexOf("?") > -1 ? "&" : "?") + valuePairs.join("&");
 				var req:URLRequest = new URLRequest(_var1);
-            	req.contentType = 'application/octet-stream';
-				req.method = URLRequestMethod.POST;
+				var loader:URLLoader = new URLLoader();
+				loader.addEventListener(Event.COMPLETE, postAudio_urlLoader_complete);
 				req.data = recorder.output;
-				
-				
-			
-				
-            	var loader:URLLoader = new URLLoader(req);
-				ExternalInterface.call("$.jRecorder.callback_finished_sending");
+				req.contentType = 'application/octet-stream';
+				req.method = URLRequestMethod.POST;
+				loader.load(req);
 			
 			}
 			
+		}
+		private function postAudio_urlLoader_complete(evt:Event):void {
+			ExternalInterface.call("jQuery.jRecorder.callback_finished_sending");
 		}
 		
 		private function getFlashVars():Object {
