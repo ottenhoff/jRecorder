@@ -1,6 +1,7 @@
 ﻿package 
 {
 	import flash.display.Sprite;
+	import flash.events.*;
 	import flash.media.Microphone;
 	import flash.system.Security;
 	import org.bytearray.micrecorder.*;
@@ -32,11 +33,14 @@
 		private var recBar:RecBar = new RecBar();
 		
 		private var maxTime:Number = 30;
-		
+		private var urlParams:Object = {};
 		private var tween:Tween;
 		private var fileReference:FileReference = new FileReference();
 		
 		private var tts:WavSound;
+		
+		private static const SR_AUDIO_ALLOWED:String = "SRAudioAllowed";
+		private var recordingAllowed:Boolean;
 
 		public function Main():void
 		{ 
@@ -48,36 +52,69 @@
 			godText.visible = false;
 			recBar.visible = false;
 			
-
 			mic = Microphone.getMicrophone();
-			mic.setSilenceLevel(5);
-			mic.gain = 50;
-			mic.setLoopBack(false);
-			mic.setUseEchoSuppression(true);
+			
+			// listen for mic becoming active
+            this.addEventListener(SR_AUDIO_ALLOWED, allowAudioHandler, false, 0, true);   
+			
+			if (mic != null) {
+                    // kill feedback
+                    mic.setUseEchoSuppression(true);
+                    // send ALL mic input to the speaker
+                    mic.setLoopBack(true);
+                    // listen for events
+                    //mic.addEventListener(ActivityEvent.ACTIVITY, activityHandler, false, 0, true);
+                    mic.addEventListener(StatusEvent.STATUS, statusHandler, false, 0, true);
+            }
 			Security.showSettings("2");
-
+			//Security.showSettings(SecurityPanel.PRIVACY);
 			addListeners();
 		}
 
 		private function addListeners():void
 		{
-			
-			
 			recorder.addEventListener(RecordingEvent.RECORDING, recording);
 			recorder.addEventListener(Event.COMPLETE, recordComplete);
 			activity.addEventListener(Event.ENTER_FRAME, updateMeter);
-			 
 			 
 			//accept call from javascript to start recording
 			ExternalInterface.addCallback("jStartRecording", jStartRecording);
 			ExternalInterface.addCallback("jStopRecording", jStopRecording);
 			ExternalInterface.addCallback("jSendFileToServer", jSendFileToServer);
-
-			
-			
+			ExternalInterface.addCallback("jAddParameter", jAddParameter);
+            ExternalInterface.addCallback("jRemoveParameter", jRemoveParameter);
 		}
 
+		// method is run when mic is activated
+        private function allowAudioHandler(e:Event):void
+        {
+            e.target.removeEventListener(e.type, allowAudioHandler);
+			
+			ExternalInterface.call("jQuery.jRecorder.callback_hide_the_flash");
+            
+            setAudio();
+        }
+
+        private function setAudio():void
+        {
+            mic.gain = 50;
+            mic.rate = 16;
+            mic.setSilenceLevel(5, 1000);
+        }
 		
+		private function statusHandler(event:StatusEvent):void {
+            if (event.code == "Microphone.Unmuted")
+            {
+                //trace("Microphone access was allowed.");
+                recordingAllowed = true;
+                dispatchEvent(new Event(SR_AUDIO_ALLOWED));
+            }
+            else if (event.code == "Microphone.Muted")
+            {
+                //trace("Microphone access was denied.");
+                recordingAllowed = false;
+            }
+        }
 		
 		
 		//external java script function call to start record
