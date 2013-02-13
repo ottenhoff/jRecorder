@@ -126,12 +126,12 @@
 			if (mic != null)
 			{
 				recorder.record();
-				ExternalInterface.call("$.jRecorder.callback_started_recording");
+				ExternalInterface.call("jQuery.jRecorder.callback_started_recording");
 				
 			}
 			else
 			{
-				ExternalInterface.call("$.jRecorder.callback_error_recording", 0);
+				ExternalInterface.call("jQuery.jRecorder.callback_error_recording", 0);
 			}
 		}
 		
@@ -140,7 +140,7 @@
 		{
 			recorder.stop();
 			mic.setLoopBack(false);
-			ExternalInterface.call("$.jRecorder.callback_stopped_recording");
+			ExternalInterface.call("jQuery.jRecorder.callback_stopped_recording");
 			
 			//finalize_recording();
 			
@@ -166,7 +166,7 @@
 		private function updateMeter(e:Event):void
 		{
 			
-			ExternalInterface.call("$.jRecorder.callback_activityLevel",  mic.activityLevel);
+			ExternalInterface.call("jQuery.jRecorder.callback_activityLevel",  mic.activityLevel);
 			
 		}
 
@@ -175,7 +175,7 @@
 			var currentTime:int = Math.floor(e.time / 1000);
 
 			
-			ExternalInterface.call("$.jRecorder.callback_activityTime",  String(currentTime) );
+			ExternalInterface.call("jQuery.jRecorder.callback_activityTime",  String(currentTime) );
 			 
 			
 			if(currentTime == maxTime )
@@ -200,12 +200,13 @@
 		}
 		
 		private function preview_recording():void
+
 		{
 			
 			tts = new WavSound(recorder.output);
 			tts.play();
 			
-			ExternalInterface.call("$.jRecorder.callback_started_preview");
+			ExternalInterface.call("jQuery.jRecorder.callback_started_preview");
 			
 			
 		}
