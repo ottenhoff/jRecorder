@@ -1,8 +1,7 @@
-Author: Sajith Amma
-Description: jRecorder is a jQuery plugin to enable a flash recorder in your webpages. You DON'T need to have a flash streaming server or RED5 server to do this recording.
+This is a fork of http://www.sajithmr.me/jrecorder/
 
-Project Documentation: http://www.sajithmr.me/jrecorder/
+==Fork Modifications==
 
-Example Implementation: http://www.sajithmr.me/jrecorder/example1.html
+a) Callback to add parameters to POST URL
 
-Author Domain: www.sajithmr.me
+b) Prompt user when Flash loads for microphone permission (instead of on record)
