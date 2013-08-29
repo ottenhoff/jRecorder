@@ -32,6 +32,7 @@
 		private var recorder:MicRecorder = new MicRecorder(waveEncoder);
 		private var recBar:RecBar = new RecBar();
 		
+		private var loader:URLLoader = new URLLoader();
 		private var maxTime:Number = 30;
 		private var urlParams:Object = {};
 		private var tween:Tween;
@@ -255,17 +256,23 @@
 				_var1 += (_var1.indexOf("?") > -1 ? "&" : "?") + valuePairs.join("&");
 				var req:URLRequest = new URLRequest(_var1);
 				var loader:URLLoader = new URLLoader();
-				loader.addEventListener(Event.COMPLETE, postAudio_urlLoader_complete);
+
 				req.data = recorder.output;
 				req.contentType = 'application/octet-stream';
 				req.method = URLRequestMethod.POST;
-				loader.load(req);
+				try{
+					loader.load(req);
+					loader.addEventListener(Event.COMPLETE,loaderResponse);
+				}
+				catch (error:Error) {
+					trace("Unable to load URL");
+				}
 			
 			}
 			
 		}
-		private function postAudio_urlLoader_complete(evt:Event):void {
-			ExternalInterface.call("jQuery.jRecorder.callback_finished_sending");
+		private function loaderResponse(event:Event):void{
+			ExternalInterface.call("callback_finished_sending", loader.data);
 		}
 		
 		private function getFlashVars():Object {
