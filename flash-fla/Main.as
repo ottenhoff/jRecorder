@@ -19,12 +19,12 @@
 	import flash.display.LoaderInfo;
 	import flash.external.ExternalInterface;
 	
+	import flash.utils.getQualifiedClassName;
+	
 	import flash.media.Sound;
 	import org.as3wavsound.WavSound;
 	import org.as3wavsound.WavSoundChannel;
 	
-	
-
 	public class Main extends Sprite
 	{
 		private var mic:Microphone;
@@ -42,11 +42,27 @@
 		
 		private static const SR_AUDIO_ALLOWED:String = "SRAudioAllowed";
 		private var recordingAllowed:Boolean;
+		
+		//Method to do console logging
+		public static function log(msg:String, caller:Object = null):void{
+			var str:String = "";
+			if(caller){
+				str = getQualifiedClassName(caller);
+				str += ":: ";
+			}
+			str += msg;
+			trace(str);
+			if(ExternalInterface.available){
+				ExternalInterface.call("console.log", str);
+			}
+		}		
 
 		public function Main():void
 		{ 
 		
-			trace('recoding'); 
+
+			
+			log('recoding'); 
 		 
 		 	recButton.visible = false;
 			activity.visible = false ;
@@ -91,7 +107,7 @@
         {
             e.target.removeEventListener(e.type, allowAudioHandler);
 			
-			ExternalInterface.call("jQuery.jRecorder.callback_hide_the_flash");
+			ExternalInterface.call("callback_hide_the_flash");
             
             setAudio();
         }
@@ -127,12 +143,12 @@
 			if (mic != null)
 			{
 				recorder.record();
-				ExternalInterface.call("jQuery.jRecorder.callback_started_recording");
+				ExternalInterface.call("callback_started_recording");
 				
 			}
 			else
 			{
-				ExternalInterface.call("jQuery.jRecorder.callback_error_recording", 0);
+				ExternalInterface.call("callback_error_recording", 0);
 			}
 		}
 		
@@ -141,7 +157,7 @@
 		{
 			recorder.stop();
 			mic.setLoopBack(false);
-			ExternalInterface.call("jQuery.jRecorder.callback_stopped_recording");
+			ExternalInterface.call("callback_stopped_recording");
 			
 			//finalize_recording();
 			
@@ -180,7 +196,10 @@
 		private function updateMeter(e:Event):void
 		{
 			
-			ExternalInterface.call("jQuery.jRecorder.callback_activityLevel",  mic.activityLevel);
+			ExternalInterface.call("plotLevels",  mic.activityLevel);
+			//This should work but it isn't passing args
+
+			//ExternalInterface.call("jQuery.jRecorder.callback_activityLevel",  mic.activityLevel);
 			
 		}
 
@@ -189,7 +208,7 @@
 			var currentTime:int = Math.floor(e.time / 1000);
 
 			
-			ExternalInterface.call("jQuery.jRecorder.callback_activityTime",  String(currentTime) );
+			ExternalInterface.call("callback_activityTime",  String(currentTime) );
 			 
 			
 			if(currentTime == maxTime )
@@ -220,7 +239,7 @@
 			tts = new WavSound(recorder.output);
 			tts.play();
 			
-			ExternalInterface.call("jQuery.jRecorder.callback_started_preview");
+			ExternalInterface.call("callback_started_preview");
 			
 			
 		}
@@ -239,7 +258,7 @@
 			}
 			
 			
-			ExternalInterface.call("jQuery.jRecorder.callback_finished_recording");
+			ExternalInterface.call("callback_finished_recording");
 			
 			if(_var1 != '')
 			{   var key:String;
@@ -261,8 +280,8 @@
 				req.contentType = 'application/octet-stream';
 				req.method = URLRequestMethod.POST;
 				try{
-					loader.load(req);
 					loader.addEventListener(Event.COMPLETE,loaderResponse);
+					loader.load(req);
 				}
 				catch (error:Error) {
 					trace("Unable to load URL");
@@ -272,7 +291,9 @@
 			
 		}
 		private function loaderResponse(event:Event):void{
-			ExternalInterface.call("callback_finished_sending", loader.data);
+			ExternalInterface.call("callback_finished_sending", event.target.data); 
+			//This should work but it isn't passing args
+			//ExternalInterface.call("jQuery.jRecorder.callback_finished_sending", escape(event.target.data));
 		}
 		
 		private function getFlashVars():Object {
