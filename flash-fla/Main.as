@@ -277,8 +277,9 @@
 				var loader:URLLoader = new URLLoader();
 
 				req.data = recorder.output;
-				req.contentType = 'application/octet-stream';
+				req.contentType = 'audio/wav';
 				req.method = URLRequestMethod.POST;
+				
 				try{
 					loader.addEventListener(Event.COMPLETE,loaderResponse);
 					loader.load(req);
