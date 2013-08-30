@@ -19,12 +19,12 @@
 	import flash.display.LoaderInfo;
 	import flash.external.ExternalInterface;
 	
+	import flash.utils.getQualifiedClassName;
+	
 	import flash.media.Sound;
 	import org.as3wavsound.WavSound;
 	import org.as3wavsound.WavSoundChannel;
 	
-	
-
 	public class Main extends Sprite
 	{
 		private var mic:Microphone;
@@ -42,11 +42,27 @@
 		
 		private static const SR_AUDIO_ALLOWED:String = "SRAudioAllowed";
 		private var recordingAllowed:Boolean;
+		
+		//Method to do console logging
+		public static function log(msg:String, caller:Object = null):void{
+			var str:String = "";
+			if(caller){
+				str = getQualifiedClassName(caller);
+				str += ":: ";
+			}
+			str += msg;
+			trace(str);
+			if(ExternalInterface.available){
+				ExternalInterface.call("console.log", str);
+			}
+		}		
 
 		public function Main():void
 		{ 
 		
-			trace('recoding'); 
+
+			
+			log('jRecorder flash init'); 
 		 
 		 	recButton.visible = false;
 			activity.visible = false ;
@@ -80,6 +96,7 @@
 			 
 			//accept call from javascript to start recording
 			ExternalInterface.addCallback("jStartRecording", jStartRecording);
+			ExternalInterface.addCallback("jStartPreview", jPreviewRecording);
 			ExternalInterface.addCallback("jStopRecording", jStopRecording);
 			ExternalInterface.addCallback("jSendFileToServer", jSendFileToServer);
 			ExternalInterface.addCallback("jAddParameter", jAddParameter);
@@ -170,8 +187,7 @@
 		
 		public function jStopPreview():void
 		{
-			
-			//no function is currently available;
+			ExternalInterface.call("jQuery.jRecorder.callback_stopped_preview");
 		}
 
 		
@@ -208,22 +224,25 @@
 			
 			//finalize_recording();
 			
-			preview_recording(); 
+			//preview_recording(); 
 			
 			
 		}
 		
-		private function preview_recording():void
+		private function jPreviewRecording():void
 
 		{
 			
-			tts = new WavSound(recorder.output);
-			tts.play();
-			
+			var tts:WavSound = new WavSound(recorder.output);
+			var channel:WavSoundChannel = tts.play();
+
+			channel.addEventListener(Event.COMPLETE, jStopPreview);
+
 			ExternalInterface.call("jQuery.jRecorder.callback_started_preview");
 			
 			
 		}
+		
 		
 		//functioon send data to server
 		private function finalize_recording():void
@@ -258,11 +277,12 @@
 				var loader:URLLoader = new URLLoader();
 
 				req.data = recorder.output;
-				req.contentType = 'application/octet-stream';
+				req.contentType = 'audio/wav';
 				req.method = URLRequestMethod.POST;
+				
 				try{
-					loader.load(req);
 					loader.addEventListener(Event.COMPLETE,loaderResponse);
+					loader.load(req);
 				}
 				catch (error:Error) {
 					trace("Unable to load URL");
@@ -272,7 +292,7 @@
 			
 		}
 		private function loaderResponse(event:Event):void{
-			ExternalInterface.call("callback_finished_sending", loader.data);
+			ExternalInterface.call("jQuery.jRecorder.callback_finished_sending", event.target.data); 
 		}
 		
 		private function getFlashVars():Object {
