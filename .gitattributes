@@ -1,0 +1,6 @@
+# Denote all files that are truly binary and should not be modified.
+*.swf binary
+*.fla binary
+
+# Declare files that will always have CRLF line endings on checkout.
+*.as text eol=crlf

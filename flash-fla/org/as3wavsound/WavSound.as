@@ -129,7 +129,14 @@ package org.as3wavsound {
 		public function play(startTime:Number = 0, loops:int = 0, sndTransform:SoundTransform = null): WavSoundChannel {
 			return player.play(this, startTime, loops, sndTransform);
 		}
-		
+
+		/**
+		 * Stops playing on a specific channel
+		 */
+		public function stop(channel:WavSoundChannel): void{
+			player.stop(channel);
+		}
+
 		/**
 		 * No idea if this works. Alpha state. Read up on Sound.extract():
 		 * http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/media/Sound.html#extract()

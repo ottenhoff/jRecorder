@@ -4,6 +4,7 @@
 	import flash.events.*;
 	import flash.media.Microphone;
 	import flash.system.Security;
+	import flash.system.SecurityPanel;
 	import org.bytearray.micrecorder.*;
 	import org.bytearray.micrecorder.events.RecordingEvent;
 	import org.bytearray.micrecorder.encoder.WaveEncoder;
@@ -39,7 +40,7 @@
 		private var fileReference:FileReference = new FileReference();
 		
 		private var tts:WavSound;
-		
+		private var channel:WavSoundChannel;
 		private static const SR_AUDIO_ALLOWED:String = "SRAudioAllowed";
 		private var recordingAllowed:Boolean;
 		
@@ -63,12 +64,12 @@
 
 			
 			log('jRecorder flash init'); 
-		 
+		
 		 	recButton.visible = false;
 			activity.visible = false ;
 			godText.visible = false;
 			recBar.visible = false;
-			
+			log('jRecorder waiting for mic'); 
 			mic = Microphone.getMicrophone();
 			
 			// listen for mic becoming active
@@ -78,13 +79,14 @@
                     // kill feedback
                     mic.setUseEchoSuppression(true);
                     // send ALL mic input to the speaker
-                    mic.setLoopBack(true);
+					mic.setLoopBack(false);
                     // listen for events
                     //mic.addEventListener(ActivityEvent.ACTIVITY, activityHandler, false, 0, true);
                     mic.addEventListener(StatusEvent.STATUS, statusHandler, false, 0, true);
             }
-			Security.showSettings("2");
-			//Security.showSettings(SecurityPanel.PRIVACY);
+			log('jRecorder mic ready');
+			//Security.showSettings("2");
+			Security.showSettings(SecurityPanel.PRIVACY);
 			addListeners();
 		}
 
@@ -93,14 +95,17 @@
 			recorder.addEventListener(RecordingEvent.RECORDING, recording);
 			recorder.addEventListener(Event.COMPLETE, recordComplete);
 			activity.addEventListener(Event.ENTER_FRAME, updateMeter);
-			 
+			
 			//accept call from javascript to start recording
 			ExternalInterface.addCallback("jStartRecording", jStartRecording);
 			ExternalInterface.addCallback("jStartPreview", jPreviewRecording);
+			ExternalInterface.addCallback("jStopPreview", jStopPreviewRecording);
+
 			ExternalInterface.addCallback("jStopRecording", jStopRecording);
 			ExternalInterface.addCallback("jSendFileToServer", jSendFileToServer);
 			ExternalInterface.addCallback("jAddParameter", jAddParameter);
             ExternalInterface.addCallback("jRemoveParameter", jRemoveParameter);
+			
 		}
 
 		// method is run when mic is activated
@@ -157,7 +162,7 @@
 		public function jStopRecording():void
 		{
 			recorder.stop();
-			mic.setLoopBack(false);
+			//mic.setLoopBack(false);
 			ExternalInterface.call("jQuery.jRecorder.callback_stopped_recording");
 			
 			//finalize_recording();
@@ -185,8 +190,9 @@
 
 	   }
 		
-		public function jStopPreview():void
+		public function jStopPreviewRecording():void
 		{
+			tts.stop(channel);
 			ExternalInterface.call("jQuery.jRecorder.callback_stopped_preview");
 		}
 
@@ -233,10 +239,10 @@
 
 		{
 			
-			var tts:WavSound = new WavSound(recorder.output);
-			var channel:WavSoundChannel = tts.play();
+			tts = new WavSound(recorder.output);
+			channel = tts.play();
 
-			channel.addEventListener(Event.COMPLETE, jStopPreview);
+			channel.addEventListener(Event.COMPLETE, jStopPreviewRecording);
 
 			ExternalInterface.call("jQuery.jRecorder.callback_started_preview");
 			
