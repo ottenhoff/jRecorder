@@ -58,35 +58,46 @@
 			}
 		}		
 
+		protected function initMicrophone():void 
+		{               
+			mic = Microphone.getMicrophone();
+			if (mic == null) return;
+			mic.setLoopBack(true); // Force permission dialog
+			// listen for mic becoming active
+
+			if (mic.muted)
+			{
+				//Security.showSettings(SecurityPanel.PRIVACY);
+			}
+		}
+
 		public function Main():void
 		{ 
-		
-
-			
 			log('jRecorder flash init'); 
 		
-		 	recButton.visible = false;
+		 	//recButton.visible = false;
 			activity.visible = false ;
-			godText.visible = false;
+			//godText.visible = false;
 			recBar.visible = false;
 			log('jRecorder waiting for mic'); 
+		
 			mic = Microphone.getMicrophone();
-			
-			// listen for mic becoming active
-            this.addEventListener(SR_AUDIO_ALLOWED, allowAudioHandler, false, 0, true);   
-			
+			mic.setLoopBack(true); // Force permission dialog
+			this.addEventListener(SR_AUDIO_ALLOWED, allowAudioHandler, false, 0, true);   
+
 			if (mic != null) {
+					// turn off loopback
+					mic.setLoopBack(false);
                     // kill feedback
                     mic.setUseEchoSuppression(true);
-                    // send ALL mic input to the speaker
-					mic.setLoopBack(false);
+
                     // listen for events
                     //mic.addEventListener(ActivityEvent.ACTIVITY, activityHandler, false, 0, true);
                     mic.addEventListener(StatusEvent.STATUS, statusHandler, false, 0, true);
             }
+
 			log('jRecorder mic ready');
-			//Security.showSettings("2");
-			Security.showSettings(SecurityPanel.PRIVACY);
+			
 			addListeners();
 		}
 
@@ -128,13 +139,14 @@
 		private function statusHandler(event:StatusEvent):void {
             if (event.code == "Microphone.Unmuted")
             {
-                //trace("Microphone access was allowed.");
+                trace("Microphone access was allowed.");
                 recordingAllowed = true;
                 dispatchEvent(new Event(SR_AUDIO_ALLOWED));
             }
             else if (event.code == "Microphone.Muted")
             {
-                //trace("Microphone access was denied.");
+                trace("Microphone access was denied.");
+				Security.showSettings(SecurityPanel.PRIVACY);
                 recordingAllowed = false;
             }
         }
@@ -161,7 +173,8 @@
 		//external javascript function to trigger stop recording
 		public function jStopRecording():void
 		{
-			recorder.stop();
+			if (recorder != null) 
+				recorder.stop();
 			//mic.setLoopBack(false);
 			ExternalInterface.call("jQuery.jRecorder.callback_stopped_recording");
 			
