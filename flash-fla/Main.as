@@ -58,19 +58,6 @@
 			}
 		}		
 
-		protected function initMicrophone():void 
-		{               
-			mic = Microphone.getMicrophone();
-			if (mic == null) return;
-			mic.setLoopBack(true); // Force permission dialog
-			// listen for mic becoming active
-
-			if (mic.muted)
-			{
-				//Security.showSettings(SecurityPanel.PRIVACY);
-			}
-		}
-
 		public function Main():void
 		{ 
 			log('jRecorder flash init'); 
@@ -94,7 +81,13 @@
                     // listen for events
                     //mic.addEventListener(ActivityEvent.ACTIVITY, activityHandler, false, 0, true);
                     mic.addEventListener(StatusEvent.STATUS, statusHandler, false, 0, true);
+					if (!mic.muted) {
+						//Remember was checked, go ahead and start it up
+						var status:StatusEvent = new StatusEvent(StatusEvent.STATUS,false,false,"Microphone.Unmuted","status")
+						mic.dispatchEvent(status);
+					}
             }
+
 
 			log('jRecorder mic ready');
 			
@@ -139,12 +132,14 @@
 		private function statusHandler(event:StatusEvent):void {
             if (event.code == "Microphone.Unmuted")
             {
+				//Remember was checked, access granted
                 trace("Microphone access was allowed.");
                 recordingAllowed = true;
                 dispatchEvent(new Event(SR_AUDIO_ALLOWED));
             }
             else if (event.code == "Microphone.Muted")
             {
+				//Remember was not checked or user needs to allow access
                 trace("Microphone access was denied.");
 				Security.showSettings(SecurityPanel.PRIVACY);
                 recordingAllowed = false;
